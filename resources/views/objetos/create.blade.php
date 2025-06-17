@@ -21,8 +21,13 @@
             </select>
         </div>
         <div>
-            <label for="color">Color:</label>
-            <input type="text" name="color" id="color" value="{{ old('color') }}" required>
+            <label for="Color">Color:</label>
+            <select name="color" id="color">
+                <option value="rojo">rojo</option>
+                <option value="amarillo">amarillo</option>
+                <option value="azul">azul</option>
+                <option value="verde">verde</option>
+            </select>
         </div>
         <div>
             <button type="submit">Guardar Objeto</button>
