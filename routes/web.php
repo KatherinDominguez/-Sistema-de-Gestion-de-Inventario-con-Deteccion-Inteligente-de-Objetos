@@ -1,9 +1,11 @@
 <?php
 use App\Http\Controllers\ObjetoController;
 use App\Http\Controllers\IdentificacionController;
+use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ArchivoController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\InventarioController;
 
 Route::get('/', function () {
     return view('login');
@@ -25,13 +27,16 @@ Route::get('/user/nuevo/nuevoUsuario', function(){
     return view('listaUsuarios');
 })->name('listaUsuarios');
 
+Route::get('/inicio', [InicioController::class, 'index'])->name('inicio');
 Route::get('/objetos', [ObjetoController::class, 'index'])->name('objetos.index');
 Route::get('/objetos/crear', [ObjetoController::class, 'create'])->name('objetos.create');
 Route::post('/objetos', [ObjetoController::class, 'store'])->name('objetos.store');
 
 Route::post('/subir', [ArchivoController::class, 'subir'])->name('archivo.subir');
 Route::get('/reiniciar', [ArchivoController::class, 'reiniciar'])->name('archivo.reiniciar');
+Route::post('/guardar-inventario', [IdentificacionController::class, 'guardarEnInventario'])->name('guardar.inventario');
 
 
 Route::post('/identificar', [IdentificacionController::class, 'identificar'])->name('identificar');
 
+Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario');

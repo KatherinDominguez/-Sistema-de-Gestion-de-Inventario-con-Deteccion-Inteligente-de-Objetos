@@ -93,11 +93,9 @@
             </div>
         </div>
        <div class="bottombox" style="display: flex; padding: 10px; border-top: 1px solid #ccc;">
-            {{-- Columna izquierda: Estado del sistema --}}
             <div style="width: 40%; padding-right: 15px; border-right: 1px solid #aaa;">
                 @include('components.bottombox-estado')
             </div>
-            {{-- Columna derecha: Resultado de identificación --}}
             <div style="width: 40%; padding-left: 15px;">
                 @include('components.bottombox-resultado')
             </div>

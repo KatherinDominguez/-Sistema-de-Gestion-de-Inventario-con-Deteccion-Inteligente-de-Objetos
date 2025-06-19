@@ -6,6 +6,7 @@
     <ul>
         <li><a href="{{ route('user') }}">Perfil</a></li>
         <li><a href="{{ route('objetos.index') }}">Gestión de Objetos</a></li>
+        <li><a href="{{ route('inventario') }}">Inventario</a></li>
     </ul>
 @endsection
 
@@ -27,20 +28,13 @@
         <div id="opciones-identificacion" style="display:none; margin-top: 10px;">
             <form action="{{ route('identificar') }}" method="POST">
                 @csrf
-                <label for="tipo">Seleccionar tipo de objeto:</label><br>
-                <select name="tipo" id="tipo" required>
-                    <option value="lata">Latas</option>
-                    <option value="botella">Botellas</option>
-                    <option value="otro">Otro</option>
-                </select><br><br>
-
-                <label for="color">Filtrar por color:</label><br>
-                <select name="color" id="color">
-                    <option value="">-- Sin filtro --</option>
-                    <option value="rojo">Rojo</option>
-                    <option value="azul">Azul</option>
-                    <option value="verde">Verde</option>
-                    <option value="amarillo">Amarillo</option>
+                <label for="objeto_id">Seleccionar objeto registrado:</label><br>
+                <select name="objeto_id" id="objeto_id" required>
+                    @foreach ($objetos as $objeto)
+                        <option value="{{ $objeto->id }}">
+                            {{ $objeto->nombre }} ({{ $objeto->forma }}, {{ $objeto->color }})
+                        </option>
+                    @endforeach
                 </select><br><br>
 
                 <button type="submit">Procesar</button>
@@ -55,6 +49,7 @@
         }
     </script>
 @endsection
+
 
 @section('rightbox')
     <p>Gráfica</p>
@@ -72,12 +67,15 @@
             </video>
         @endif
     @endif
-    @if (session('resultado'))
-        <div style="margin-top: 10px; background: #e0ffe0; padding: 10px; border-radius: 5px;">
-            <strong>Resultado:</strong> {{ session('resultado') }}
-        </div>
+    @if(session('resultado'))
+        <form method="POST" action="{{ route('guardar.inventario') }}">
+            @csrf
+            <input type="hidden" name="objeto_id" value="{{ session('ultimo_objeto_id') }}">
+            <input type="hidden" name="cantidad" value="{{ \Illuminate\Support\Str::of(session('resultado'))->match('/(\d+)/') }}">
+            <input type="hidden" name="resultado" value="{{ session('resultado') }}">
+            <button type="submit">Guardar en inventario</button>
+        </form>
     @endif
-
     @if ($errors->any())
         <div style="margin-top: 10px; background: #ffe0e0; padding: 10px; border-radius: 5px;">
             <strong>Error:</strong> {{ $errors->first() }}
