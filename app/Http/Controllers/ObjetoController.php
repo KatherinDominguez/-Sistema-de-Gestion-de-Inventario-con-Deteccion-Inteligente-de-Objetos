@@ -15,14 +15,15 @@ class ObjetoController extends Controller
     {
         return view('objetos.create');
     }
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nombre' => 'required',
-            'forma' => 'required',
-            'color' => 'required',
-        ]);
-        Objeto::create($request->all());
-        return redirect()->route('objetos.index')->with('success', 'Objeto registrado.');
+    public function store(Request $request){
+    $request->validate([
+        'nombre' => 'required',
+        'forma' => 'required',
+        'color' => 'required',
+        'categoria' => 'required',
+    ]);
+
+    Objeto::create($request->all());
+    return redirect()->route('objetos.index')->with('success', 'Objeto registrado.');
     }
 }

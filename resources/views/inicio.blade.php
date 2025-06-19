@@ -10,9 +10,7 @@
 @endsection
 
 @section('topbar')
-            Monitoreo con scroll <br>
-            Línea 1 <br>
-            Línea 2 <br>
+    @include('components.topbar')
 @endsection
 
 @section('leftbox')
@@ -65,7 +63,7 @@
             $archivo = session('archivo_subido');
             $extension = pathinfo($archivo, PATHINFO_EXTENSION);
         @endphp
-        @if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif']))
+        @if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif','avif']))
             <img src="{{ asset('storage/' . $archivo) }}" alt="Vista previa" width="300">
         @elseif (in_array($extension, ['mp4', 'mov', 'avi', 'webm']))
             <video width="600" height="450" controls>
@@ -88,5 +86,6 @@
 @endsection
 
 @section('bottombox')
-    <p>Identificacion</p>
+    @include('components.bottombox-estado')
+    @include('components.bottombox-resultado')
 @endsection

@@ -6,8 +6,14 @@
     <h2>Objetos Registrados</h2>
     <a href="{{ route('objetos.create') }}">Crear nuevo objeto</a>
     <ul>
-        @foreach ($objetos as $objeto)
-            <li>{{ $objeto->nombre }} - {{ $objeto->forma }} - {{ $objeto->color }}</li>
-        @endforeach
+    @foreach ($objetos as $objeto)
+        <li>
+            <strong>{{ $objeto->nombre }}</strong> - 
+            Forma: {{ $objeto->forma }} - 
+            Color: {{ $objeto->color }} - 
+            Categoría: {{ $objeto->categoria }}
+        </li>
+    @endforeach
     </ul>
+
 @endsection

@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Objeto extends Model
 {
-    protected $fillable = ['nombre', 'forma', 'color'];
+    protected $fillable = ['nombre', 'forma', 'color','categoria'];
 }

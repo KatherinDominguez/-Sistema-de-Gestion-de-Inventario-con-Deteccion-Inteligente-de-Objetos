@@ -81,7 +81,7 @@
         </div>
 
         <div class="topbar">
-            @yield('topbar', 'Encabezado')
+            @yield('topbar')
         </div>
 
         <div class="box1">
@@ -92,9 +92,15 @@
                 @yield('rightbox', 'Caja derecha grande')
             </div>
         </div>
-
-        <div class="bottombox">
-            @yield('bottombox', 'Caja inferior')
+       <div class="bottombox" style="display: flex; padding: 10px; border-top: 1px solid #ccc;">
+            {{-- Columna izquierda: Estado del sistema --}}
+            <div style="width: 40%; padding-right: 15px; border-right: 1px solid #aaa;">
+                @include('components.bottombox-estado')
+            </div>
+            {{-- Columna derecha: Resultado de identificación --}}
+            <div style="width: 40%; padding-left: 15px;">
+                @include('components.bottombox-resultado')
+            </div>
         </div>
     </div>
 </body>

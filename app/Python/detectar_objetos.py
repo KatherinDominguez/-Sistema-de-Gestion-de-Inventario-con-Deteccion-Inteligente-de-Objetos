@@ -1,8 +1,6 @@
-# detectar_objetos.py
 import sys
 import cv2
 import numpy as np
-import json
 
 def detectar(imagen_path, tipo, color):
     imagen = cv2.imread(imagen_path)
@@ -23,6 +21,7 @@ def detectar(imagen_path, tipo, color):
         print(f"ERROR: Color '{color}' no es válido.")
         sys.exit(1)
 
+    # Filtro por color
     mascara_total = None
     for (lower, upper) in rangos[color]:
         lower_np = np.array(lower, dtype=np.uint8)
@@ -30,12 +29,41 @@ def detectar(imagen_path, tipo, color):
         mascara = cv2.inRange(hsv, lower_np, upper_np)
         mascara_total = mascara if mascara_total is None else cv2.bitwise_or(mascara_total, mascara)
 
+    # Limpieza de máscara
     mascara_total = cv2.erode(mascara_total, None, iterations=2)
     mascara_total = cv2.dilate(mascara_total, None, iterations=2)
 
+    # Detección de contornos
     contornos, _ = cv2.findContours(mascara_total, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contornos_filtrados = [c for c in contornos if cv2.contourArea(c) > 200]
-    cantidad = len(contornos_filtrados)
+
+    tipo = tipo.lower()
+    cantidad = 0
+
+    for cnt in contornos_filtrados:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if h == 0:
+            continue
+        razon = w / h
+
+        # Clasificación de forma
+        if 0.95 <= razon <= 1.05:
+            forma_detectada = "cuadrada"
+        elif 0.3 <= razon <= 0.7:
+            forma_detectada = "cilindro"
+        elif 0.7 < razon < 0.95:
+            forma_detectada = "rectangular-vertical"
+        elif razon > 1.5:
+            forma_detectada = "rectangular-horizontal"
+        else:
+            forma_detectada = "otra"
+
+        # Si el tipo no es forma válida, contar todos
+        if tipo in ["cuadrada", "cilindro", "rectangular-vertical", "rectangular-horizontal"]:
+            if forma_detectada == tipo:
+                cantidad += 1
+        else:
+            cantidad += 1
 
     print(f"Detectado {cantidad} objetos tipo '{tipo}' con color '{color}'.")
 

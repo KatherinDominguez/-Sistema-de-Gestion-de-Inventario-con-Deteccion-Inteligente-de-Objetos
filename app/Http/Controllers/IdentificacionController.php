@@ -14,8 +14,10 @@ class IdentificacionController extends Controller
 
         $archivo = session('archivo_subido');
         if (!$archivo) {
+            $this->agregarAlHistorialTopbar("Error: No se encontró archivo para procesar.");
             return back()->withErrors('No se encontró ningún archivo cargado.');
         }
+         $this->agregarAlHistorialTopbar("Procesando archivo '$archivo'...");
         $ruta_absoluta = storage_path('app/public/' . $archivo);
         $extension = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
         if (in_array($extension, ['mp4', 'mov', 'avi', 'webm', 'gif'])) {
@@ -30,14 +32,21 @@ class IdentificacionController extends Controller
                    
         $salida = shell_exec($comando . " 2>&1");
         if (!$salida || str_starts_with(trim($salida), 'ERROR:')) {
+            $this->agregarAlHistorialTopbar("Error al procesar: " . trim($salida));
             return back()->withErrors('Error en el procesamiento: ' . trim($salida));
         }
-
+        $this->agregarAlHistorialTopbar($salida);
         return back()->with('resultado', trim($salida));
     } catch (\Exception $e) {
+        $this->agregarAlHistorialTopbar("Excepción en la identificación: " . $e->getMessage());
         return back()->withErrors('Error en la identificación: ' . $e->getMessage());
     }
 }
-
+    private function agregarAlHistorialTopbar($mensaje){
+        $registro = now()->format('d/m H:i') . " — " . $mensaje;
+        $historial = session('historial_topbar', []);
+        array_unshift($historial, $registro); // Agrega al principio
+        session(['historial_topbar' => array_slice($historial, 0, 5)]); // Máx 5 entradas
+    }
 
 }

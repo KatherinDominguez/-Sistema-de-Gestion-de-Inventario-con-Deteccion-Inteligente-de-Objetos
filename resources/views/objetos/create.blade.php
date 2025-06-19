@@ -30,6 +30,10 @@
             </select>
         </div>
         <div>
+            <label for="categoria">Categoría:</label>
+            <input type="text" name="categoria" id="categoria" value="{{ old('categoria') }}" placeholder="Ej: enlatados, bebidas..." required>
+        </div>
+        <div>
             <button type="submit">Guardar Objeto</button>
         </div>
     </form>
