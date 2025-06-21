@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Models\Objeto;
 use App\Models\Deteccion;
-
+use App\Models\Inventario;
 class IdentificacionController extends Controller
 {
     public function identificar(Request $request) {

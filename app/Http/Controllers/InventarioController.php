@@ -16,8 +16,8 @@ class InventarioController extends Controller
             ->get()
             ->map(function ($item) {
                 $estado = match (true) {
-                    $item->total < 10 => 'Crítico',
-                    $item->total < 30 => 'Bajo',
+                    $item->total < 3 => 'Crítico',
+                    $item->total < 7 => 'Bajo',
                     default => 'Suficiente'
                 };
 
@@ -37,5 +37,43 @@ class InventarioController extends Controller
             });
 
         return view('inventario.inventario', compact('agrupado'));
+    }
+    public function exportar()
+    {
+        $inventario = Deteccion::with('objeto')
+            ->selectRaw('objeto_id, SUM(cantidad_detectada) as total')
+            ->groupBy('objeto_id')
+            ->get();
+
+        $contenido = "📦 INVENTARIO GENERAL - " . now()->format('d/m/Y H:i') . "\n\n";
+
+        foreach ($inventario as $item) {
+            $objeto = $item->objeto;
+            $estado = match (true) {
+                $item->total < 10 => 'Crítico',
+                $item->total < 30 => 'Bajo',
+                default => 'Suficiente',
+            };
+            $prioridad = match ($estado) {
+                'Crítico' => 'Alta',
+                'Bajo' => 'Media',
+                default => 'Baja'
+            };
+
+            $contenido .= "Objeto: {$objeto->nombre}\n";
+            $contenido .= "Color: {$objeto->color}\n";
+            $contenido .= "Cantidad Detectada: {$item->total}\n";
+            $contenido .= "Estado: {$estado}\n";
+            $contenido .= "Prioridad: {$prioridad}\n";
+            $contenido .= "----------------------------\n\n";
+        }
+
+        $contenido .= "(Total objetos: " . count($inventario) . ")\n";
+
+        $nombreArchivo = 'inventario_' . now()->format('Ymd_His') . '.txt';
+
+        return response($contenido)
+            ->header('Content-Type', 'text/plain')
+            ->header('Content-Disposition', 'attachment; filename="' . $nombreArchivo . '"');
     }
 }

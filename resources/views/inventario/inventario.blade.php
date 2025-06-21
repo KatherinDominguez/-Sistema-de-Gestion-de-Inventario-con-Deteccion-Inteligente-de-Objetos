@@ -103,7 +103,10 @@
             @endforelse
         </tbody>
     </table>
-
     <a href="{{ route('inicio') }}" class="volver-btn">⬅ Volver al Panel</a>
+    <form action="{{ route('inventario.exportar') }}" method="POST">
+        @csrf
+        <button type="submit">📄 Exportar como TXT</button>
+    </form>
 </body>
 </html>

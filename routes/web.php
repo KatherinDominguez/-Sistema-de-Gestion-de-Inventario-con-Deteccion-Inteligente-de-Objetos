@@ -3,6 +3,7 @@ use App\Http\Controllers\ObjetoController;
 use App\Http\Controllers\IdentificacionController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ArchivoController;
+use App\Http\Controllers\ReporteController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\InventarioController;
@@ -40,3 +41,6 @@ Route::post('/guardar-inventario', [IdentificacionController::class, 'guardarEnI
 Route::post('/identificar', [IdentificacionController::class, 'identificar'])->name('identificar');
 
 Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario');
+Route::post('/inventario',[InventarioController::class,'exportar'])->name('inventario.exportar');
+
+Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');

@@ -7,6 +7,8 @@
         <li><a href="{{ route('user') }}">Perfil</a></li>
         <li><a href="{{ route('objetos.index') }}">Gestión de Objetos</a></li>
         <li><a href="{{ route('inventario') }}">Inventario</a></li>
+        <li><a href="{{ route('reportes.index') }}">Reportes</a></li>
+
     </ul>
 @endsection
 
