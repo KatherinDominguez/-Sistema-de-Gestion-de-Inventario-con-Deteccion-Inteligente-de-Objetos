@@ -5,9 +5,9 @@
     <title>Inventario de Objetos</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 40px;
-            background-color: #f8f9fa;
+            background-color: #f4f6f9;
         }
 
         h1 {
@@ -21,11 +21,13 @@
             margin: 0 auto;
             border-collapse: collapse;
             background: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         th, td {
-            padding: 12px 20px;
+            padding: 14px 22px;
             border: 1px solid #dee2e6;
             text-align: center;
         }
@@ -33,37 +35,57 @@
         th {
             background-color: #007bff;
             color: white;
+            font-weight: bold;
         }
 
-        .estado-crítico {
-            background-color: #f8d7da;
-            color: #721c24;
+        .estado-badge, .prioridad-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
         }
 
-        .estado-bajo {
-            background-color: #fff3cd;
-            color: #856404;
-        }
+        .estado-crítico { background-color: #f8d7da; color: #721c24; }
+        .estado-bajo { background-color: #fff3cd; color: #856404; }
+        .estado-suficiente { background-color: #d4edda; color: #155724; }
 
-        .estado-suficiente {
-            background-color: #d4edda;
-            color: #155724;
+        .badge-estado-Crítico    { background-color: #dc3545; color: white; }
+        .badge-estado-Bajo       { background-color: #ffc107; color: black; }
+        .badge-estado-Suficiente { background-color: #28a745; color: white; }
+
+        .badge-prioridad-Alta    { background-color: #dc3545; color: white; }
+        .badge-prioridad-Media   { background-color: #fd7e14; color: white; }
+        .badge-prioridad-Baja    { background-color: #17a2b8; color: white; }
+
+        .volver-btn, .exportar-btn {
+            display: inline-block;
+            margin: 30px auto 0;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.2s;
         }
 
         .volver-btn {
-            display: block;
-            margin: 30px auto 0;
-            padding: 10px 20px;
             background-color: #007bff;
             color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            text-align: center;
-            width: 200px;
         }
 
         .volver-btn:hover {
             background-color: #0056b3;
+        }
+
+        .exportar-btn {
+            background-color: #6c757d;
+            color: white;
+            margin-left: 45%;
+        }
+
+        .exportar-btn:hover {
+            background-color: #5a6268;
         }
     </style>
 </head>
@@ -83,18 +105,15 @@
         <tbody>
             @forelse ($agrupado as $item)
                 @php
-                    $clase = match ($item['estado']) {
-                        'Crítico' => 'estado-crítico',
-                        'Bajo' => 'estado-bajo',
-                        default => 'estado-suficiente'
-                    };
+                    $estadoClass = 'badge-estado-' . $item['estado'];
+                    $prioridadClass = 'badge-prioridad-' . $item['prioridad'];
                 @endphp
-                <tr class="{{ $clase }}">
+                <tr>
                     <td>{{ $item['nombre'] }}</td>
                     <td>{{ ucfirst($item['color']) }}</td>
                     <td>{{ $item['total'] }}</td>
-                    <td>{{ $item['estado'] }}</td>
-                    <td>{{ $item['prioridad'] }}</td>
+                    <td><span class="estado-badge {{ $estadoClass }}">{{ $item['estado'] }}</span></td>
+                    <td><span class="prioridad-badge {{ $prioridadClass }}">{{ $item['prioridad'] }}</span></td>
                 </tr>
             @empty
                 <tr>
@@ -103,10 +122,14 @@
             @endforelse
         </tbody>
     </table>
-    <a href="{{ route('inicio') }}" class="volver-btn">⬅ Volver al Panel</a>
-    <form action="{{ route('inventario.exportar') }}" method="POST">
-        @csrf
-        <button type="submit">📄 Exportar como TXT</button>
-    </form>
+
+    <div style="text-align: center;">
+        <a href="{{ route('inicio') }}" class="volver-btn">⬅ Volver al Panel</a>
+
+        <form action="{{ route('inventario.exportar') }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit" class="exportar-btn">📄 Exportar como TXT</button>
+        </form>
+    </div>
 </body>
 </html>
