@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Services;
+
+use App\Librerias\MiParseador;
+use App\Models\Objeto;
+
+class ParserService
+{
+    private $parser;
+
+    public function __construct()
+    {
+        $this->parser = new MiParseador();
+        $this->cargarLexicoYGramatica();
+        $this->definirComandos();
+        $this->parser->build();
+    }
+
+    private function cargarLexicoYGramatica()
+    {
+        $lexico = <<<LEX
+        PALABRA: [a-zA-Z]+
+        SKIP: [\s]+
+        LEX;
+
+        $gramatica = <<<GRAM
+        COMANDO -> ACCION OBJETO COLOR
+        COMANDO -> ACCION OBJETO
+        ACCION -> PALABRA
+        OBJETO -> PALABRA
+        COLOR -> PALABRA
+        GRAM;
+
+        $this->parser->setLexico($lexico);
+        $this->parser->setGramatica($gramatica);
+    }
+    private function definirComandos()
+    {
+        $this->parser->agregarComando('subir', function () {
+            session(['comando_voz' => 'subir']);
+        });
+        $this->parser->agregarComando('identificar', function ($nombre, $color) {
+            session(['comando_voz' => 'identificar', 'nombre' => $nombre, 'color' => $color]);
+        });
+    }
+    public function interpretar($texto)
+    {
+        try {
+            $texto = strtolower($texto);
+            $this->parser->parsearYejecutar($texto);
+        } catch (\Exception $e) {
+            session(['comando_voz' => 'ninguno']);
+        }
+    }
+}

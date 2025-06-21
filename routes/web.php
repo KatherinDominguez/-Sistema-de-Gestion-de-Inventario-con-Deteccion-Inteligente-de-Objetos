@@ -4,6 +4,7 @@ use App\Http\Controllers\IdentificacionController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ArchivoController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\VozController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\InventarioController;
@@ -44,3 +45,7 @@ Route::get('/inventario', [InventarioController::class, 'index'])->name('inventa
 Route::post('/inventario',[InventarioController::class,'exportar'])->name('inventario.exportar');
 
 Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+
+
+Route::post('/voz/procesar', [VozController::class, 'procesar'])->name('voz.procesar');
+

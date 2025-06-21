@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>@yield('title', 'Página Principal')</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body {
         margin: 0;
