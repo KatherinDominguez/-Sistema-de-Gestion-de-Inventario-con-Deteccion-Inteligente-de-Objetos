@@ -9,73 +9,62 @@ use App\Models\Deteccion;
 
 class IdentificacionController extends Controller
 {
-    public function identificar(Request $request) {
-        try {
-            // 1. Recuperar datos desde formulario o desde sesión de voz
-            $objeto = null;
+    public function identificar(Request $request)
+{
+    try {
+        $objeto = null;
 
-            if ($request->filled('objeto_id')) {
-                $objeto = Objeto::findOrFail($request->input('objeto_id'));
-            } elseif (session()->has('voz_nombre') && session()->has('voz_color')) {
-                $objeto = Objeto::where('nombre', session('voz_nombre'))
-                                ->where('color', session('voz_color'))
-                                ->first();
-                if (!$objeto) {
-                    return back()->withErrors("No se encontró un objeto con nombre '" . session('voz_nombre') . "' y color '" . session('voz_color') . "'");
-                }
-            } else {
-                return back()->withErrors('No se proporcionó información suficiente para identificar el objeto.');
+        if ($request->filled('objeto_id')) {
+            $objeto = Objeto::findOrFail($request->input('objeto_id'));
+        } elseif ($request->filled('voz_nombre') && $request->filled('voz_color')) {
+            $objeto = Objeto::where('nombre', $request->input('voz_nombre'))
+                            ->where('color', $request->input('voz_color'))
+                            ->first();
+            if (!$objeto) {
+                return back()->withErrors("No se encontró un objeto con nombre '" . $request->input('voz_nombre') . "' y color '" . $request->input('voz_color') . "'");
             }
-
-            $tipo = $objeto->nombre;
-            $color = $objeto->color;
-            session(['ultimo_objeto_id' => $objeto->id]);
-
-            // 2. Validar si hay archivo cargado
-            $archivo = session('archivo_subido');
-            if (!$archivo) {
-                $this->agregarAlHistorialTopbar("Error: No se encontró archivo para procesar.");
-                return back()->withErrors('No se encontró ningún archivo cargado.');
-            }
-
-            $this->agregarAlHistorialTopbar("Procesando archivo '$archivo'...");
-
-            // 3. Ejecutar script Python
-            $ruta_absoluta = storage_path('app/public/' . $archivo);
-            $extension = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
-
-            $script = in_array($extension, ['mp4', 'mov', 'avi', 'webm', 'gif']) ?
-                        base_path('app/Python/detectar_objetos_video.py') :
-                        base_path('app/Python/detectar_objetos.py');
-
-            $comando = "python " . escapeshellcmd($script) . " " .
-                       escapeshellarg($ruta_absoluta) . " " .
-                       escapeshellarg($tipo) . " " .
-                       escapeshellarg($color);
-
-            $salida = shell_exec($comando . " 2>&1");
-            if (!$salida || str_starts_with(trim($salida), 'ERROR:')) {
-                $this->agregarAlHistorialTopbar("Error al procesar: " . trim($salida));
-                return back()->withErrors('Error en el procesamiento: ' . trim($salida));
-            }
-
-            $this->agregarAlHistorialTopbar($salida);
-
-            // 4. Detectar cantidad desde resultado
-            if (preg_match("/Detectado (\\d+) objetos/i", $salida, $coincidencias)) {
-                $cantidad = (int) $coincidencias[1];
-
-                // Opcional: puedes guardar directamente aquí si deseas
-                // Deteccion::create([...])
-            }
-
-            return back()->with('resultado', trim($salida));
-
-        } catch (\Exception $e) {
-            $this->agregarAlHistorialTopbar("Excepción en la identificación: " . $e->getMessage());
-            return back()->withErrors('Error en la identificación: ' . $e->getMessage());
+        } else {
+            return back()->withErrors('No se proporcionó información suficiente para identificar el objeto.');
         }
+
+        $tipo = $objeto->nombre;
+        $color = $objeto->color;
+        session(['ultimo_objeto_id' => $objeto->id]);
+
+        $archivo = session('archivo_subido');
+        if (!$archivo) {
+            $this->agregarAlHistorialTopbar("Error: No se encontró archivo para procesar.");
+            return back()->withErrors('No se encontró ningún archivo cargado.');
+        }
+
+        $this->agregarAlHistorialTopbar("Procesando archivo '$archivo'...");
+        $ruta_absoluta = storage_path('app/public/' . $archivo);
+        $extension = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
+        $script = in_array($extension, ['mp4', 'mov', 'avi', 'webm', 'gif']) ?
+                  base_path('app/Python/detectar_objetos_video.py') :
+                  base_path('app/Python/detectar_objetos.py');
+
+        $comando = "python " . escapeshellcmd($script) . " " .
+                   escapeshellarg($ruta_absoluta) . " " .
+                   escapeshellarg($tipo) . " " .
+                   escapeshellarg($color);
+
+        $salida = shell_exec($comando . " 2>&1");
+
+        if (!$salida || str_starts_with(trim($salida), 'ERROR:')) {
+            $this->agregarAlHistorialTopbar("Error al procesar: " . trim($salida));
+            return back()->withErrors('Error en el procesamiento: ' . trim($salida));
+        }
+
+        $this->agregarAlHistorialTopbar($salida);
+        return back()->with('resultado', trim($salida));
+
+    } catch (\Exception $e) {
+        $this->agregarAlHistorialTopbar("Excepción en la identificación: " . $e->getMessage());
+        return back()->withErrors('Error en la identificación: ' . $e->getMessage());
     }
+}
+
 
     public function guardarEnInventario(Request $request)
     {
@@ -93,7 +82,8 @@ class IdentificacionController extends Controller
         }
     }
 
-    private function agregarAlHistorialTopbar($mensaje){
+    private function agregarAlHistorialTopbar($mensaje)
+    {
         $registro = now()->format('d/m H:i') . " — " . $mensaje;
         $historial = session('historial_topbar', []);
         array_unshift($historial, $registro);

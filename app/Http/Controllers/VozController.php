@@ -3,35 +3,47 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\ParserService;
+use App\Models\Objeto;
 
 class VozController extends Controller
 {
-    public function procesar(Request $request, ParserService $parserService)
+    public function procesar(Request $request)
     {
-        // Normalizamos el texto a minúsculas
-        $texto = strtolower($request->input('texto'));
-        $parserService->interpretar($texto);
+        $texto = strtolower($request->input('texto', ''));
+
+        // Acción para subir archivo
         if (str_contains($texto, 'subir')) {
             session(['comando_voz' => 'subir']);
             return response()->json(['accion' => 'subir']);
         }
+
         // Acción para identificar
         if (str_contains($texto, 'identificar')) {
-            session(['comando_voz' => 'identificar']);
+            // Extraer palabra después de "identificar"
+            preg_match('/identificar\s+(\w+)/', $texto, $coincidencias);
 
-            // Opcional: recuperar palabras como color o tipo
-            if (str_contains($texto, 'rojo')) {
-                session(['color' => 'rojo']);
-            }
-            if (str_contains($texto, 'coca')) {
-                session(['nombre' => 'coca']);
-            }
+            if (isset($coincidencias[1])) {
+                $nombrePosible = $coincidencias[1];
 
-            return response()->json(['accion' => 'identificar']);
+                // Búsqueda insensible a mayúsculas/minúsculas
+                $objeto = Objeto::whereRaw('LOWER(nombre) = ?', [strtolower($nombrePosible)])->first();
+
+                if ($objeto) {
+                    session([
+                        'comando_voz' => 'identificar',
+                        'voz_nombre' => $objeto->nombre,
+                        'voz_color' => $objeto->color
+                    ]);
+                    return response()->json(['accion' => 'identificar']);
+                } else {
+                    session(['comando_voz' => 'ninguno']);
+                    return response()->json(['accion' => 'ninguno']);
+                }
+            }
         }
 
-        // Si no se reconoce ninguna acción
+        // Si no se reconoce ningún comando válido
+        session(['comando_voz' => 'ninguno']);
         return response()->json(['accion' => 'ninguno']);
     }
 }

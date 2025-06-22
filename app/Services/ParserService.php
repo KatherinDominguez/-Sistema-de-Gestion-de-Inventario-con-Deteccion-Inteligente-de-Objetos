@@ -20,7 +20,7 @@ class ParserService
     private function cargarLexicoYGramatica()
     {
         $lexico = <<<LEX
-        PALABRA: [a-zA-Z]+
+        PALABRA: [a-zA-ZáéíóúÁÉÍÓÚñÑ]+
         SKIP: [\s]+
         LEX;
 
@@ -35,15 +35,35 @@ class ParserService
         $this->parser->setLexico($lexico);
         $this->parser->setGramatica($gramatica);
     }
+
     private function definirComandos()
     {
+        // Subir archivo
         $this->parser->agregarComando('subir', function () {
             session(['comando_voz' => 'subir']);
         });
-        $this->parser->agregarComando('identificar', function ($nombre, $color) {
-            session(['comando_voz' => 'identificar', 'nombre' => $nombre, 'color' => $color]);
+
+        // Identificar objeto con o sin color
+        $this->parser->agregarComando('identificar', function ($nombre, $color = null) {
+            $nombre = strtolower($nombre);
+            $color = $color ? strtolower($color) : null;
+
+            // Si solo se dice "identificar Coca", buscar en la BD su color automáticamente
+            if (!$color) {
+                $objeto = Objeto::whereRaw('LOWER(nombre) = ?', [$nombre])->first();
+                if ($objeto) {
+                    $color = strtolower($objeto->color);
+                }
+            }
+
+            session([
+                'comando_voz' => 'identificar',
+                'nombre' => $nombre,
+                'color' => $color
+            ]);
         });
     }
+
     public function interpretar($texto)
     {
         try {
