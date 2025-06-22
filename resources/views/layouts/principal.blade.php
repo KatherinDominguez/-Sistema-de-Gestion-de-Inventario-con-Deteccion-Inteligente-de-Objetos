@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'Página Principal')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
     <style>
         body {
         margin: 0;
@@ -102,6 +105,7 @@
             </div>
         </div>
     </div>
+    
 </body>
 </html>
 
