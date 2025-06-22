@@ -27,7 +27,7 @@ class IdentificacionController extends Controller
             return back()->withErrors('No se proporcionó información suficiente para identificar el objeto.');
         }
 
-        $tipo = $objeto->nombre;
+        $tipo = $objeto->forma;
         $color = $objeto->color;
         session(['ultimo_objeto_id' => $objeto->id]);
 

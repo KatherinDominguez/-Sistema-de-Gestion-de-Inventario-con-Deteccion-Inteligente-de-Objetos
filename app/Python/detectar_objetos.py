@@ -58,7 +58,9 @@ def detectar(imagen_path, tipo, color):
         else:
             forma_detectada = "otra"
 
-        # Si el tipo no es forma válida, contar todos
+        print(f"Forma detectada: {forma_detectada} - Ancho: {w} - Alto: {h}")
+
+        # Contar solo si coincide la forma
         if tipo in ["cuadrada", "cilindro", "rectangular-vertical", "rectangular-horizontal"]:
             if forma_detectada == tipo:
                 cantidad += 1
