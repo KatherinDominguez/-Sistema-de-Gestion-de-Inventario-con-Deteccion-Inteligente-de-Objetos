@@ -57,6 +57,7 @@ class IdentificacionController extends Controller
         }
 
         $this->agregarAlHistorialTopbar($salida);
+        session()->forget(['resultado']);
         return back()->with('resultado', trim($salida));
 
     } catch (\Exception $e) {

@@ -34,12 +34,14 @@
     @else
         <button id="btn-identificar" onclick="mostrarOpciones()">🔍 Identificar</button>
         <div id="opciones-identificacion" style="display:none; margin-top: 10px;">
-            <form id="form-identificar" action="{{ route('identificar') }}" method="POST">
+        <form id="form-identificar" action="{{ route('identificar') }}" method="POST">
                 @csrf
+                {{-- Campos ocultos que serán actualizados por voz --}}
+                <input type="hidden" name="voz_nombre" id="voz_nombre" value="{{ session('voz_nombre') }}">
+                <input type="hidden" name="voz_color" id="voz_color" value="{{ session('voz_color') }}">
+
                 @if (session('voz_nombre') && session('voz_color'))
                     <p>🗣️ Voz detectó: <strong>{{ session('voz_nombre') }} ({{ session('voz_color') }})</strong></p>
-                    <input type="hidden" name="voz_nombre" value="{{ session('voz_nombre') }}">
-                    <input type="hidden" name="voz_color" value="{{ session('voz_color') }}">
                 @endif
 
                 <label for="objeto_id">Seleccionar objeto registrado:</label><br>
@@ -49,12 +51,12 @@
                         <option value="{{ $objeto->id }}">{{ $objeto->nombre }} ({{ $objeto->forma }}, {{ $objeto->color }})</option>
                     @endforeach
                 </select><br><br>
+
                 <button type="submit">Procesar</button>
-            </form>
+        </form>
         </div>
         <button onclick="window.location='{{ route('archivo.reiniciar') }}'">Subir otro archivo</button>
     @endif
-
     <!-- Control por Voz -->
     <button id="btn-voz">🎤 Usar Comando de Voz</button>
     <p id="texto-reconocido" style="margin-top:10px; font-weight: bold;"></p>
@@ -154,6 +156,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.accion === "subir") {
                     document.getElementById("archivo")?.click();
                 } else if (data.accion === "identificar") {
+                    // Actualizar campos ocultos antes de enviar el form
+                    document.getElementById("voz_nombre").value = data.nombre || "";
+                    document.getElementById("voz_color").value = data.color || "";
                     document.getElementById("form-identificar")?.submit();
                 } else {
                     textoReconocido.innerHTML += "<br>⚠️ Comando no reconocido.";
@@ -171,6 +176,8 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 });
 </script>
+
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

@@ -8,42 +8,38 @@ use App\Models\Objeto;
 class VozController extends Controller
 {
     public function procesar(Request $request)
-    {
-        $texto = strtolower($request->input('texto', ''));
+{
+    $texto = strtolower($request->input('texto', ''));
 
-        // Acción para subir archivo
-        if (str_contains($texto, 'subir')) {
-            session(['comando_voz' => 'subir']);
-            return response()->json(['accion' => 'subir']);
-        }
+    if (str_contains($texto, 'subir')) {
+        session(['comando_voz' => 'subir']);
+        return response()->json(['accion' => 'subir']);
+    }
 
-        // Acción para identificar
-        if (str_contains($texto, 'identificar')) {
-            // Extraer palabra después de "identificar"
-            preg_match('/identificar\s+(\w+)/', $texto, $coincidencias);
+    if (str_contains($texto, 'identificar')) {
+        preg_match('/identificar\s+(\w+)/', $texto, $coincidencias);
+        if (isset($coincidencias[1])) {
+            $nombrePosible = $coincidencias[1];
+            $objeto = \App\Models\Objeto::whereRaw('LOWER(nombre) = ?', [strtolower($nombrePosible)])->first();
 
-            if (isset($coincidencias[1])) {
-                $nombrePosible = $coincidencias[1];
+            if ($objeto) {
+                session([
+                    'comando_voz' => 'identificar',
+                    'voz_nombre' => $objeto->nombre,
+                    'voz_color' => $objeto->color
+                ]);
 
-                // Búsqueda insensible a mayúsculas/minúsculas
-                $objeto = Objeto::whereRaw('LOWER(nombre) = ?', [strtolower($nombrePosible)])->first();
-
-                if ($objeto) {
-                    session([
-                        'comando_voz' => 'identificar',
-                        'voz_nombre' => $objeto->nombre,
-                        'voz_color' => $objeto->color
-                    ]);
-                    return response()->json(['accion' => 'identificar']);
-                } else {
-                    session(['comando_voz' => 'ninguno']);
-                    return response()->json(['accion' => 'ninguno']);
-                }
+                return response()->json([
+                    'accion' => 'identificar',
+                    'nombre' => $objeto->nombre,
+                    'color' => $objeto->color
+                ]);
             }
         }
-
-        // Si no se reconoce ningún comando válido
-        session(['comando_voz' => 'ninguno']);
-        return response()->json(['accion' => 'ninguno']);
     }
+
+    session(['comando_voz' => 'ninguno']);
+    return response()->json(['accion' => 'ninguno']);
+}
+
 }
