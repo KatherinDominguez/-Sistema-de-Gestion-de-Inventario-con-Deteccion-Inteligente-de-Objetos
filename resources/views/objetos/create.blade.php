@@ -21,10 +21,9 @@
                 <label for="forma" style="font-weight: bold;">Forma Geométrica:</label><br>
                 <select name="forma" id="forma" required
                     style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
-                    <option value="circular">🔵 Circular</option>
                     <option value="cuadrado">⬛ Cuadrado</option>
                     <option value="rectangular">⬜ Rectangular</option>
-                    <option value="cilíndrico">🧃 Cilíndrico</option>
+                    <option value="cilindrico">🧃 Cilindrico</option>
                 </select>
             </div>
 

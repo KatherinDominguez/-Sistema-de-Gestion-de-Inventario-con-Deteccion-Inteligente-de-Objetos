@@ -36,7 +36,6 @@
         <div id="opciones-identificacion" style="display:none; margin-top: 10px;">
         <form id="form-identificar" action="{{ route('identificar') }}" method="POST">
                 @csrf
-                {{-- Campos ocultos que serán actualizados por voz --}}
                 <input type="hidden" name="voz_nombre" id="voz_nombre" value="{{ session('voz_nombre') }}">
                 <input type="hidden" name="voz_color" id="voz_color" value="{{ session('voz_color') }}">
 
