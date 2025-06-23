@@ -48,6 +48,7 @@ class IdentificacionController extends Controller
                    escapeshellarg($ruta_absoluta) . " " .
                    escapeshellarg($tipo) . " " .
                    escapeshellarg($color);
+                   escapeshellarg($objeto->nombre);
 
         $salida = shell_exec($comando . " 2>&1");
 
