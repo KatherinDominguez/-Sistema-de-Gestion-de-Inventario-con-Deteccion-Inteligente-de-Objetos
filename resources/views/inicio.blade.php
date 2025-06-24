@@ -25,16 +25,16 @@
     </form>
 
     @if (!session('archivo_subido'))
-        <form action="{{ route('archivo.subir') }}" method="POST" enctype="multipart/form-data">
+        <form id="form-manual" action="{{ route('archivo.subir') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            <label>Selecciona imagen o video:</label>
-            <input type="file" name="archivo" accept="image/*,video/*,gif/*" required>
+            <label for="archivo-manual">Selecciona imagen o video:</label>
+            <input id="archivo-manual" type="file" name="archivo" accept="image/*,video/*,gif/*" required>
             <button type="submit">Subir</button>
         </form>
     @else
         <button id="btn-identificar" onclick="mostrarOpciones()">🔍 Identificar</button>
         <div id="opciones-identificacion" style="display:none; margin-top: 10px;">
-        <form id="form-identificar" action="{{ route('identificar') }}" method="POST">
+            <form id="form-identificar" action="{{ route('identificar') }}" method="POST">
                 @csrf
                 <input type="hidden" name="voz_nombre" id="voz_nombre" value="{{ session('voz_nombre') }}">
                 <input type="hidden" name="voz_color" id="voz_color" value="{{ session('voz_color') }}">
@@ -52,22 +52,36 @@
                 </select><br><br>
 
                 <button type="submit">Procesar</button>
-        </form>
+            </form>
         </div>
         <button onclick="window.location='{{ route('archivo.reiniciar') }}'">Subir otro archivo</button>
     @endif
+
     <!-- Control por Voz -->
     <button id="btn-voz">🎤 Usar Comando de Voz</button>
+    <div id="comandos-voz" style="display:none; font-size: 0.9em; color: #444; margin-top:5px;">
+        <strong>Comandos disponibles:</strong>
+        <ul>
+            <li>🗣️ "subir archivo"</li>
+            <li>🗣️ "identificar [nombre] [color]"</li>
+        </ul>
+    </div>
     <p id="texto-reconocido" style="margin-top:10px; font-weight: bold;"></p>
 
     <!-- Control por Gestos -->
     <button id="btn-gesto">🖐️ Usar Gestos</button>
+    <div id="comandos-gesto" style="display:none; font-size: 0.9em; color: #444; margin-top:5px;">
+        <strong>Gestos disponibles:</strong>
+        <ul>
+            <li>🖐️ Mano abierta (Subir archivo)</li>
+            <li>✊ Puño cerrado (Mostrar opciones de identificación)</li>
+        </ul>
+    </div>
     <div id="contenedor-gesto" style="display:none; position:relative;">
         <video id="video" width="300" height="225" autoplay muted style="border:2px solid black;"></video>
         <canvas id="canvas-gesto" width="300" height="225" style="position:absolute; left:0; top:0;"></canvas>
         <p id="estado-gesto" style="font-weight:bold; color:blue;">🧠 Detectando gestos...</p>
     </div>
-
 
     <script>
         function mostrarOpciones() {
@@ -116,18 +130,19 @@
     @include('components.bottombox-resultado')
 @endsection
 
-
-<!-- Scripts de Voz -->
+<!-- Scripts -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const botonVoz = document.getElementById("btn-voz");
     const textoReconocido = document.getElementById("texto-reconocido");
+    const comandosVoz = document.getElementById("comandos-voz");
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
     recognition.lang = 'es-ES';
     recognition.interimResults = true;
 
     botonVoz.addEventListener("click", () => {
+        comandosVoz.style.display = 'block';
         recognition.start();
         textoReconocido.innerText = "🎙️ Escuchando...";
     });
@@ -146,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                    "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content
                 },
                 body: JSON.stringify({ texto: final })
             })
@@ -155,7 +170,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.accion === "subir") {
                     document.getElementById("archivo")?.click();
                 } else if (data.accion === "identificar") {
-                    // Actualizar campos ocultos antes de enviar el form
                     document.getElementById("voz_nombre").value = data.nombre || "";
                     document.getElementById("voz_color").value = data.color || "";
                     document.getElementById("form-identificar")?.submit();
@@ -176,8 +190,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
-
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const btnGesto = document.getElementById("btn-gesto");
@@ -186,6 +198,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const ctx = canvas.getContext("2d");
     const estado = document.getElementById("estado-gesto");
     const contenedor = document.getElementById("contenedor-gesto");
+    const comandosGesto = document.getElementById("comandos-gesto");
 
     let gestureStartTime = null;
     let currentGesture = null;
@@ -194,6 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     btnGesto.addEventListener("click", async () => {
         contenedor.style.display = "block";
+        comandosGesto.style.display = "block";
 
         const hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
@@ -229,6 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
             mediaStream.getTracks().forEach(track => track.stop());
         }
         contenedor.style.display = "none";
+        comandosGesto.style.display = "none";
     }
 
     function onResults(results) {
@@ -249,16 +264,22 @@ document.addEventListener("DOMContentLoaded", function () {
             drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
             drawLandmarks(ctx, landmarks, { color: '#FF0000', radius: 3 });
 
-            const fingers = [8, 12, 16, 20];
-            let openFingers = 0;
+            const fingers = [
+                { tip: 8, pip: 6 },
+                { tip: 12, pip: 10 },
+                { tip: 16, pip: 14 },
+                { tip: 20, pip: 18 }
+            ];
 
-            for (let i of fingers) {
-                if (landmarks[i].y < landmarks[i - 2].y) openFingers++;
+            let openFingers = 0;
+            for (let finger of fingers) {
+                if (landmarks[finger.tip].y < landmarks[finger.pip].y) {
+                    openFingers++;
+                }
             }
 
             const isHandOpen = openFingers >= 3;
             const isFist = openFingers === 0;
-
             const now = Date.now();
 
             if (isHandOpen) {
@@ -296,6 +317,3 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
-
-
-
