@@ -82,7 +82,28 @@ class ParserService
         $this->parser->agregarComando('reiniciar', function () {
             session(['comando_voz' => 'reiniciar']);
         });
-        // Alias o sinónimos
+        $this->parser->agregarComando('abrir', function ($destino) {
+        $destino = strtolower($destino);
+        $ruta = null;
+
+        switch ($destino) {
+            case 'inventario':
+                $ruta = route('inventario');
+                break;
+            case 'reportes':
+                $ruta = route('reportes.index');
+                break;
+            case 'objetos':
+                $ruta = route('objetos.index');
+                break;
+        }
+
+        if ($ruta) {
+            session(['comando_voz' => 'redirigir', 'url' => $ruta]);
+        } else {
+            session(['comando_voz' => 'ninguno']);
+        }
+        });
     }
 
     public function interpretar($texto)

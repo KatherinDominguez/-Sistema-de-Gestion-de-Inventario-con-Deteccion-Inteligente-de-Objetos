@@ -59,12 +59,16 @@
 
     <!-- Control por Voz -->
     <button id="btn-voz">🎤 Usar Comando de Voz</button>
+    <button id="btn-cancelar-voz" style="display:none;">❌ Cancelar</button>
     <div id="comandos-voz" style="display:none; font-size: 0.9em; color: #444; margin-top:5px;">
         <strong>Comandos disponibles:</strong>
         <ul>
             <li>🗣️ "subir archivo"</li>
             <li>🗣️ "identificar [nombre]"</li>
             <li>🗣️ "reiniciar"</li>
+            <li>🗣️ "abrir inventario"</li>
+            <li>🗣️ "abrir objetos"</li>
+            <li>🗣️ "abrir reportes"</li>
         </ul>
     </div>
     <p id="texto-reconocido" style="margin-top:10px; font-weight: bold;"></p>
@@ -135,6 +139,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const botonVoz = document.getElementById("btn-voz");
+    const botonCancelar = document.getElementById("btn-cancelar-voz");
     const textoReconocido = document.getElementById("texto-reconocido");
     const comandosVoz = document.getElementById("comandos-voz");
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -144,10 +149,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     botonVoz.addEventListener("click", () => {
         comandosVoz.style.display = 'block';
+        botonCancelar.style.display = 'inline-block';
         recognition.start();
         textoReconocido.innerText = "🎙️ Escuchando...";
     });
-
+    botonCancelar.addEventListener("click", () => {
+        recognition.abort(); // cancela inmediatamente
+        textoReconocido.innerText = "⛔ Cancelado por el usuario.";
+        botonCancelar.style.display = 'none';
+        comandosVoz.style.display = 'none';
+    });
+    recognition.onend = function () {
+        botonCancelar.style.display = 'none';
+    };
     recognition.onresult = function (event) {
         let final = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -189,18 +203,19 @@ document.addEventListener("DOMContentLoaded", function () {
                             }
                         }
                     }
-
                     // Rellenar campos ocultos
                     document.getElementById("voz_nombre").value = data.nombre || "";
                     document.getElementById("voz_color").value = data.color || "";
-
                     // Enviar el formulario
                     document.getElementById("form-identificar")?.submit();
                 } else if (data.accion === "reiniciar") {
                     window.location.href = "{{ route('archivo.reiniciar') }}";
-                } else {
-                    textoReconocido.innerHTML += "<br>⚠️ Comando no reconocido.";
+                }else if (data.accion === "redirigir" && data.url) {
+                    window.location.href = data.url;
+                }else{
+                    textoReconocido.innerHTML += "<br>❌ Comando no reconocido.";
                 }
+             
             })
             .catch(err => {
                 console.error("Error al procesar comando:", err);
@@ -210,7 +225,12 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     recognition.onerror = function (event) {
-        textoReconocido.innerText = "❌ Error: " + event.error;
+        botonCancelar.style.display = 'none';
+        if (event.error === "aborted") {
+            textoReconocido.innerText = "⛔ Cancelado por el usuario.";
+        } else {
+            textoReconocido.innerText = "❌ Error: " + event.error;
+        }
     };
 });
 </script>

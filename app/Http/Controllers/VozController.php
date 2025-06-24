@@ -27,6 +27,12 @@ class VozController extends Controller
         if ($accion === 'reiniciar') {
             return response()->json(['accion' => 'reiniciar']);
         }
+        if ($accion === 'redirigir') {
+            return response()->json([
+                'accion' => 'redirigir',
+                'url' => session('url')
+            ]);
+        }
         return response()->json(['accion' => 'ninguno']);
     }
 
