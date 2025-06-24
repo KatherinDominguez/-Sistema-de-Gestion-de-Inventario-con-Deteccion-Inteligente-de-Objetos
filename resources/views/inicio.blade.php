@@ -75,6 +75,7 @@
 
     <!-- Control por Gestos -->
     <button id="btn-gesto">🖐️ Usar Gestos</button>
+    <button id="btn-cancelar-gesto" style="display:none;">❌ Cancelar Gestos</button>
     <div id="comandos-gesto" style="display:none; font-size: 0.9em; color: #444; margin-top:5px;">
         <strong>Gestos disponibles:</strong>
         <ul>
@@ -239,6 +240,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const btnGesto = document.getElementById("btn-gesto");
+    const btnCancelarGesto = document.getElementById("btn-cancelar-gesto");
     const video = document.getElementById("video");
     const canvas = document.getElementById("canvas-gesto");
     const ctx = canvas.getContext("2d");
@@ -254,7 +256,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btnGesto.addEventListener("click", async () => {
         contenedor.style.display = "block";
         comandosGesto.style.display = "block";
-
+        btnCancelarGesto.style.display = "inline-block";
         const hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
@@ -282,6 +284,10 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         camera.start();
     });
+    btnCancelarGesto.addEventListener("click", () => {
+        detenerCamara();
+        estado.innerText = "⛔ Detección cancelada por el usuario.";
+    });
 
     function detenerCamara() {
         if (camera) camera.stop();
@@ -290,76 +296,106 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         contenedor.style.display = "none";
         comandosGesto.style.display = "none";
+        btnCancelarGesto.style.display = "none";
     }
-
     function onResults(results) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.translate(-canvas.width, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.translate(-canvas.width, 0);
 
-        if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-            ctx.restore();
-            currentGesture = null;
-            gestureStartTime = null;
-            estado.innerText = "✋ Esperando gesto...";
-            return;
-        }
-
-        for (const landmarks of results.multiHandLandmarks) {
-            drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
-            drawLandmarks(ctx, landmarks, { color: '#FF0000', radius: 3 });
-
-            const fingers = [
-                { tip: 8, pip: 6 },
-                { tip: 12, pip: 10 },
-                { tip: 16, pip: 14 },
-                { tip: 20, pip: 18 }
-            ];
-
-            let openFingers = 0;
-            for (let finger of fingers) {
-                if (landmarks[finger.tip].y < landmarks[finger.pip].y) {
-                    openFingers++;
-                }
-            }
-
-            const isHandOpen = openFingers >= 3;
-            const isFist = openFingers === 0;
-            const now = Date.now();
-
-            if (isHandOpen) {
-                if (currentGesture !== 'open') {
-                    currentGesture = 'open';
-                    gestureStartTime = now;
-                } else if (now - gestureStartTime >= 3000) {
-                    estado.innerText = "🖐️ Gesto detectado: Mano abierta (Subir)";
-                    document.getElementById("archivo")?.click();
-                    detenerCamara();
-                    currentGesture = null;
-                } else {
-                    estado.innerText = "🕒 Mantén la mano abierta...";
-                }
-            } else if (isFist) {
-                if (currentGesture !== 'fist') {
-                    currentGesture = 'fist';
-                    gestureStartTime = now;
-                } else if (now - gestureStartTime >= 3000) {
-                    estado.innerText = "✊ Gesto detectado: Puño cerrado (Identificar)";
-                    document.querySelector("button[onclick='mostrarOpciones()']")?.click();
-                    detenerCamara();
-                    currentGesture = null;
-                } else {
-                    estado.innerText = "🕒 Mantén el puño cerrado...";
-                }
-            } else {
-                currentGesture = null;
-                gestureStartTime = null;
-                estado.innerText = "✋ Esperando gesto...";
-            }
-        }
-
+    if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
         ctx.restore();
+        currentGesture = null;
+        gestureStartTime = null;
+        estado.innerText = "✋ Esperando gesto...";
+        return;
     }
+
+    for (const landmarks of results.multiHandLandmarks) {
+        drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
+        drawLandmarks(ctx, landmarks, { color: '#FF0000', radius: 3 });
+
+        let openFingers = 0;
+
+        // 🧠 Detectar pulgar (horizontal, para selfieMode=true)
+        const isThumbOpen = landmarks[4].x < landmarks[3].x; // mano derecha
+        if (isThumbOpen) openFingers++;
+
+        // ✋ Detectar 4 dedos restantes (vertical)
+        const fingers = [
+            { tip: 8, pip: 6 },   // índice
+            { tip: 12, pip: 10 }, // medio
+            { tip: 16, pip: 14 }, // anular
+            { tip: 20, pip: 18 }  // meñique
+        ];
+
+        for (let finger of fingers) {
+            if (landmarks[finger.tip].y < landmarks[finger.pip].y) {
+                openFingers++;
+            }
+        }
+
+        const now = Date.now();
+        let gesture = null;
+        let action = null;
+        let mensaje = "";
+
+        if (openFingers === 0) {
+            gesture = "Identificar";
+            action = () => {
+                document.querySelector("button[onclick='mostrarOpciones()']")?.click();
+                mensaje = "✊ Gesto detectado: Puño cerrado (Identificar)";
+            };
+        } else if (openFingers === 1) {
+            gesture = "one";
+            action = () => {
+                window.location.href = "{{ route('archivo.reiniciar') }}";
+                mensaje = "☝️ Gesto detectado: 1 dedo (Reiniciar)";
+            };
+        } else if (openFingers === 2) {
+            gesture = "two";
+            action = () => {
+                window.location.href = "{{ route('objetos.index') }}";
+                mensaje = "✌️ Gesto detectado: 2 dedos (Ir a Objetos)";
+            };
+        } else if (openFingers === 3) {
+            gesture = "three";
+            action = () => {
+                window.location.href = "{{ route('inventario') }}";
+                mensaje = "🤟 Gesto detectado: 3 dedos (Ir a Inventario)";
+            };
+        } else if (openFingers === 4) {
+            gesture = "four";
+            action = () => {
+                window.location.href = "{{ route('reportes.index') }}";
+                mensaje = "🖖 Gesto detectado: 4 dedos (Ir a Reportes)";
+            };
+        } else if (openFingers === 5) {
+            gesture = "open";
+            action = () => {
+                document.getElementById("archivo")?.click();
+                mensaje = "🖐️ Gesto detectado: Mano abierta (Subir)";
+            };
+        }
+
+        if (gesture !== currentGesture) {
+            currentGesture = gesture;
+            gestureStartTime = now;
+        } else if (now - gestureStartTime >= 3000) {
+            if (action) {
+                action();
+                detenerCamara();
+                estado.innerText = mensaje;
+                currentGesture = null;
+            }
+        } else {
+            estado.innerText = `🕒 Mantén el gesto (${gesture})...`;
+        }
+    }
+
+    ctx.restore();
+}
+
 });
 </script>
