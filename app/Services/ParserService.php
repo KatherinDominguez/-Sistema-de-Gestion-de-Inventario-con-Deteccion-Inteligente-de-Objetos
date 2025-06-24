@@ -1,4 +1,22 @@
 <?php
+/**
+ * Clase ParserService
+ *
+ * Esta clase implementa el patrón de diseño "Service Layer" (Capa de Servicios).
+ * Se encarga de encapsular la lógica de negocio relacionada con la interpretación
+ * de comandos por voz usando el parser personalizado MiParseador.
+ *
+ * Responsabilidades:
+ * - Definir y cargar el léxico y la gramática.
+ * - Registrar comandos y asociarles acciones.
+ * - Interpretar texto ingresado y ejecutar la acción correspondiente.
+ * - Interactuar con el modelo Objeto para completar información faltante.
+ *
+ * Este patrón permite mantener los controladores ligeros y enfocados en el flujo
+ * HTTP, delegando la lógica de negocio a servicios reutilizables.
+ *
+ * Patrón aplicado: Service Layer (Martin Fowler)
+ */
 
 namespace App\Services;
 
@@ -25,11 +43,10 @@ class ParserService
         LEX;
 
         $gramatica = <<<GRAM
-        COMANDO -> ACCION OBJETO COLOR
-        COMANDO -> ACCION OBJETO
+        COMANDO -> ACCION OBJETO 
+        COMANDO -> ACCION
         ACCION -> PALABRA
         OBJETO -> PALABRA
-        COLOR -> PALABRA
         GRAM;
 
         $this->parser->setLexico($lexico);
@@ -62,6 +79,10 @@ class ParserService
                 'color' => $color
             ]);
         });
+        $this->parser->agregarComando('reiniciar', function () {
+            session(['comando_voz' => 'reiniciar']);
+        });
+        // Alias o sinónimos
     }
 
     public function interpretar($texto)
@@ -70,6 +91,7 @@ class ParserService
             $texto = strtolower($texto);
             $this->parser->parsearYejecutar($texto);
         } catch (\Exception $e) {
+            \Log::error('Parser error: ' . $e->getMessage());
             session(['comando_voz' => 'ninguno']);
         }
     }

@@ -54,7 +54,7 @@
                 <button type="submit">Procesar</button>
             </form>
         </div>
-        <button onclick="window.location='{{ route('archivo.reiniciar') }}'">Subir otro archivo</button>
+        <button id="btn-reiniciar" onclick="window.location='{{ route('archivo.reiniciar') }}'">Subir otro archivo</button>
     @endif
 
     <!-- Control por Voz -->
@@ -63,7 +63,8 @@
         <strong>Comandos disponibles:</strong>
         <ul>
             <li>🗣️ "subir archivo"</li>
-            <li>🗣️ "identificar [nombre] [color]"</li>
+            <li>🗣️ "identificar [nombre]"</li>
+            <li>🗣️ "reiniciar"</li>
         </ul>
     </div>
     <p id="texto-reconocido" style="margin-top:10px; font-weight: bold;"></p>
@@ -157,6 +158,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (event.results[0].isFinal) {
             recognition.stop();
+
+            // Limpiar puntuación
+            final = final.toLowerCase().replace(/[^\p{L}\s]/gu, '');
+
             fetch("/voz/procesar", {
                 method: "POST",
                 headers: {
@@ -170,9 +175,29 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.accion === "subir") {
                     document.getElementById("archivo")?.click();
                 } else if (data.accion === "identificar") {
+                    const nombre = data.nombre?.toLowerCase();
+                    const color = data.color?.toLowerCase();
+                    const select = document.getElementById("objeto_id");
+
+                    // Buscar y seleccionar opción en el select
+                    if (select && nombre && color) {
+                        for (let option of select.options) {
+                            const texto = option.textContent.toLowerCase();
+                            if (texto.includes(nombre) && texto.includes(color)) {
+                                option.selected = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Rellenar campos ocultos
                     document.getElementById("voz_nombre").value = data.nombre || "";
                     document.getElementById("voz_color").value = data.color || "";
+
+                    // Enviar el formulario
                     document.getElementById("form-identificar")?.submit();
+                } else if (data.accion === "reiniciar") {
+                    window.location.href = "{{ route('archivo.reiniciar') }}";
                 } else {
                     textoReconocido.innerHTML += "<br>⚠️ Comando no reconocido.";
                 }
@@ -189,6 +214,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 });
 </script>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
