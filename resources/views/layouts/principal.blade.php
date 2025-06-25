@@ -76,6 +76,29 @@
         padding: 10px;
         border: 1px solid #ccc;
     }
+    .btn {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #b32a2a;
+    }
     </style>
 </head>
 <body>

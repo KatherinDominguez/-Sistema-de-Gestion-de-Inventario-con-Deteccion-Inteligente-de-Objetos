@@ -8,6 +8,10 @@
         <li><a href="{{ route('objetos.index') }}">Gestión de Objetos</a></li>
         <li><a href="{{ route('inventario') }}">Inventario</a></li>
         <li><a href="{{ route('reportes.index') }}">Reportes</a></li>
+        <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+        @csrf
+        <button type="submit" class="btn btn-danger">Cerrar Sesión</button>
+        </form>
     </ul>
 @endsection
 

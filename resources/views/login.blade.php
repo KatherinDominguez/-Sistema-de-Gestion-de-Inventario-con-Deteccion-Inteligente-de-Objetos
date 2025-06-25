@@ -19,6 +19,7 @@
 
             <button type="submit">Ingresar</button>
         </form>
+            <p>¿No tienes una cuenta? <a href="{{ route('registro') }}">Registrar usuario</a></p>
     </div>
 </body>
 </html>

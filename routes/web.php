@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\ObjetoController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\IdentificacionController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ArchivoController;
@@ -9,25 +10,31 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\InventarioController;
 
-Route::get('/', function () {
-    return view('login');
-})->name('login');
-Route::post('/login', function () {
-    Session::forget('archivo_subido');
-    return redirect()->route('inicio');
-})->name('login');
-Route::get('/inicio', function () {
-    return view('inicio');
-})->name('inicio');
+Route::get('/', [AuthController::class, 'mostrarLogin'])->name('login');
+Route::post('/', [AuthController::class, 'procesarLogin'])->name('login.procesar');
+
 Route::get('/user', function(){
     return view('user');
 })->name('user');
+Route::get('/user', [AuthController::class, 'mostrarUsuarios'])->name('user');
 Route::get('/user/nuevo', function(){
     return view('nuevoUsuario');
 })->name('nuevoUsuario');
 Route::get('/user/nuevo/nuevoUsuario', function(){
     return view('listaUsuarios');
 })->name('listaUsuarios');
+
+Route::get('/registro', [AuthController::class, 'mostrarRegistro'])->name('registro');
+Route::post('/registro', [AuthController::class, 'guardarUsuario'])->name('registro.guardar');
+Route::post('/registro', [AuthController::class, 'guardarNuevopUsuario'])->name('registro.guardar');
+Route::post('/usuarios/borrar', [AuthController::class, 'borrarUsuario'])->name('usuarios.borrar');
+Route::get('/usuarios/editar/{nombre}', [AuthController::class, 'mostrarFormularioEditar'])->name('usuarios.editar.form');
+Route::post('/usuarios/editar', [AuthController::class, 'editarUsuario'])->name('usuarios.editar');
+
+Route::post('/logout', function () {
+    Session::flush();
+    return redirect()->route('login');
+})->name('logout');
 
 Route::get('/inicio', [InicioController::class, 'index'])->name('inicio');
 Route::get('/objetos', [ObjetoController::class, 'index'])->name('objetos.index');
