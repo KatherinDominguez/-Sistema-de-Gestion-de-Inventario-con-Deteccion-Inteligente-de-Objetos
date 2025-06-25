@@ -40,14 +40,12 @@ class IdentificacionController extends Controller
         $this->agregarAlHistorialTopbar("Procesando archivo '$archivo'...");
         $ruta_absoluta = storage_path('app/public/' . $archivo);
         $extension = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
-        $script = in_array($extension, ['mp4', 'mov', 'avi', 'webm', 'gif']) ?
-                  base_path('app/Python/detectar_objetos_video.py') :
-                  base_path('app/Python/detectar_objetos.py');
+        $script =base_path('app/Python/detectar_objetos.py');
 
         $comando = "python " . escapeshellcmd($script) . " " .
                    escapeshellarg($ruta_absoluta) . " " .
                    escapeshellarg($tipo) . " " .
-                   escapeshellarg($color);
+                   escapeshellarg($color)." " .
                    escapeshellarg($objeto->nombre);
 
         $salida = shell_exec($comando . " 2>&1");

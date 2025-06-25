@@ -1,8 +1,11 @@
 import sys
 import cv2
 import numpy as np
+import time
 
 def detectar(imagen_path, tipo, color):
+    tiempo_inicio = time.time()
+
     imagen = cv2.imread(imagen_path)
     if imagen is None:
         print("ERROR: No se pudo abrir la imagen.")
@@ -21,7 +24,6 @@ def detectar(imagen_path, tipo, color):
         print(f"ERROR: Color '{color}' no es válido.")
         sys.exit(1)
 
-    # Filtro por color
     mascara_total = None
     for (lower, upper) in rangos[color]:
         lower_np = np.array(lower, dtype=np.uint8)
@@ -29,11 +31,9 @@ def detectar(imagen_path, tipo, color):
         mascara = cv2.inRange(hsv, lower_np, upper_np)
         mascara_total = mascara if mascara_total is None else cv2.bitwise_or(mascara_total, mascara)
 
-    # Limpieza de máscara
     mascara_total = cv2.erode(mascara_total, None, iterations=2)
     mascara_total = cv2.dilate(mascara_total, None, iterations=2)
 
-    # Detección de contornos
     contornos, _ = cv2.findContours(mascara_total, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contornos_filtrados = [c for c in contornos if cv2.contourArea(c) > 200]
 
@@ -58,15 +58,15 @@ def detectar(imagen_path, tipo, color):
         else:
             forma_detectada = "otra"
 
-
-        # Contar solo si coincide la forma
         if tipo in ["cuadrada", "cilindro", "rectangular-vertical", "rectangular-horizontal"]:
             if forma_detectada == tipo:
                 cantidad += 1
         else:
             cantidad += 1
 
+    tiempo_fin = time.time()
     print(f"Detectado {cantidad} objetos tipo '{tipo}' con color '{color}'.")
+    print(f"Tiempo tomado: {tiempo_fin - tiempo_inicio:.4f} segundos")
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:

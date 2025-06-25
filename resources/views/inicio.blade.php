@@ -81,6 +81,10 @@
         <ul>
             <li>🖐️ Mano abierta (Subir archivo)</li>
             <li>✊ Puño cerrado (Mostrar opciones de identificación)</li>
+            <li>☝️ 1 dedo (Reiniciar)</li>
+            <li>✌️ 2 dedos (Ir a Objetos)</li>
+            <li>🤟 3 dedos (Ir a Inventario)</li>
+            <li>🖖 4 dedos (Ir a Reportes)</li>
         </ul>
     </div>
     <div id="contenedor-gesto" style="display:none; position:relative;">
@@ -174,7 +178,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (event.results[0].isFinal) {
             recognition.stop();
 
-            // Limpiar puntuación
             final = final.toLowerCase().replace(/[^\p{L}\s]/gu, '');
 
             fetch("/voz/procesar", {
