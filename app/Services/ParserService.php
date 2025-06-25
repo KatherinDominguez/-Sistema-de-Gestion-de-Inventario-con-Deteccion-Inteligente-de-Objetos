@@ -65,7 +65,7 @@ class ParserService
             $nombre = strtolower($nombre);
             $color = $color ? strtolower($color) : null;
 
-            // Si solo se dice "identificar Coca", buscar en la BD su color automáticamente
+            // Si solo se dice "identificar Coca"
             if (!$color) {
                 $objeto = Objeto::whereRaw('LOWER(nombre) = ?', [$nombre])->first();
                 if ($objeto) {

@@ -18,7 +18,6 @@
 @section('leftbox')
     <p>Opciones</p>
 
-    <!-- Subida de archivo por voz o gesto -->
     <form id="form-subida" action="{{ route('archivo.subir') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <input type="file" id="archivo" name="archivo" accept="image/*,video/*" style="display:none;" onchange="document.getElementById('form-subida').submit();">
@@ -140,7 +139,7 @@
     @include('components.bottombox-resultado')
 @endsection
 
-<!-- Scripts -->
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const botonVoz = document.getElementById("btn-voz");

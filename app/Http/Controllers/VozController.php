@@ -11,7 +11,6 @@ class VozController extends Controller
     {
         $texto = strtolower($request->input('texto', ''));
         $texto = preg_replace('/[^\p{L}\s]/u', '', $texto);
-        // Interpretar usando tu parser personalizado
         $parser->interpretar($texto);
         $accion = session('comando_voz');
         if ($accion === 'subir') {
