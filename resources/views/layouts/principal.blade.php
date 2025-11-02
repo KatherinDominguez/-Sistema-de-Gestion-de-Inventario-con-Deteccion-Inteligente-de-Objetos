@@ -2,133 +2,96 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title', 'Página Principal')</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
-    <style>
-        body {
-        margin: 0;
-        padding: 0;
-        font-family: Arial, sans-serif;
-        }
-
-    .container {
-        display: grid;
-        grid-template-columns: 200px auto;
-        grid-template-rows: auto 1fr auto;
-        height: 100vh;
-        gap: 5px;
-        box-sizing: border-box;
-    }
-
-    .sidebar {
-        grid-row: 1 / 4;
-        background-color: #0b2c4d;
-        padding-top: 20px;
-    }
-
-    .sidebar ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .sidebar li {
-        margin-bottom: 10px;
-    }
-
-    .sidebar a {
-        display: block;
-        background-color: #2468a2; 
-        color: white;
-        text-decoration: none;
-        padding: 12px 16px;
-        margin: 0 10px;
-        border-radius: 4px;
-        font-weight: bold;
-        text-align: center;
-        transition: background-color 0.3s ease;
-    }
-
-    .sidebar a:hover {
-        background-color: #1e5485;
-    }
-
-    .topbar {
-        grid-column: 2;
-        padding: 10px;
-        background-color: #eaeaea;
-        border: 1px solid #ccc;
-        height: 80px;         
-        overflow-y: scroll;
-    }
-
-    .box1 {
-        grid-column: 2;
-        display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 5px;
-    }
-
-    .left, .right, .bottombox {
-        padding: 10px;
-        border: 1px solid #ccc;
-    }
-    .btn {
-    padding: 12px 16px;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    width: 100%;
-    box-sizing: border-box;
-    transition: background-color 0.3s ease;
-    }
-
-    .btn-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .btn-danger:hover {
-        background-color: #b32a2a;
-    }
-    </style>
+    <title>@yield('title', 'Mi Aplicación')</title>
+    
+    <!-- CSS Responsive -->
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
+    
+    <!-- MediaPipe para gestos -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            @yield('sidebar', 'Aquí va el menú lateral')
-        </div>
-
-        <div class="topbar">
-            @yield('topbar')
-        </div>
-
-        <div class="box1">
-            <div class="left">
-                @yield('leftbox', 'Caja izquierda')
-            </div>
-            <div class="right">
-                @yield('rightbox', 'Caja derecha grande')
-            </div>
-        </div>
-       <div class="bottombox" style="display: flex; padding: 10px; border-top: 1px solid #ccc;">
-            <div style="width: 40%; padding-right: 15px; border-right: 1px solid #aaa;">
-                @include('components.bottombox-estado')
-            </div>
-            <div style="width: 40%; padding-left: 15px;">
-                @include('components.bottombox-resultado')
-            </div>
-        </div>
-    </div>
+    <!-- Botón Hamburguesa (solo móvil) -->
+    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+        ☰
+    </button>
     
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="overlay" onclick="toggleSidebar()"></div>
+    
+    <div class="container-principal">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            @yield('sidebar')
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                @yield('topbar')
+            </header>
+            
+            <!-- Left Box (Opciones) -->
+            <section class="leftbox">
+                @yield('leftbox')
+            </section>
+            
+            <!-- Right Box (Gráfica/Resultados) -->
+            <section class="rightbox">
+                @yield('rightbox')
+            </section>
+            
+            <!-- Bottom Box (Estado/Resultados) -->
+            <footer class="bottombox">
+                @yield('bottombox')
+            </footer>
+        </main>
+    </div>
+
+    <!-- JavaScript para el menú móvil -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.overlay');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Prevenir scroll del body cuando el menú está abierto
+            if (sidebar.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Cerrar sidebar al cambiar de tamaño de pantalla
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.querySelector('.overlay');
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // Cerrar sidebar al hacer clic en un enlace (móvil)
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 768) {
+                const sidebarLinks = document.querySelectorAll('.sidebar a');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        setTimeout(toggleSidebar, 200);
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
-

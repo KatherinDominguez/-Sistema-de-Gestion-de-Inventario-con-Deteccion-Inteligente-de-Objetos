@@ -95,6 +95,7 @@
     <table>
         <thead>
             <tr>
+                <th>Imagen</th>
                 <th>Objeto</th>
                 <th>Color</th>
                 <th>Total Detectado</th>
@@ -109,6 +110,15 @@
                     $prioridadClass = 'badge-prioridad-' . $item['prioridad'];
                 @endphp
                 <tr>
+                    <td>
+                        @if($item['archivo'])
+                            <img src="{{ asset('storage/' . $item['archivo']) }}" 
+                                alt="Miniatura" 
+                                style="width: 60px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                        @else
+                            <span style="color: #6c757d;">—</span>
+                        @endif
+                    </td>
                     <td>{{ $item['nombre'] }}</td>
                     <td>{{ ucfirst($item['color']) }}</td>
                     <td>{{ $item['total'] }}</td>
@@ -117,7 +127,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5">No hay registros aún.</td>
+                    <td colspan="6">No hay registros aún.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -128,7 +138,7 @@
 
         <form action="{{ route('inventario.exportar') }}" method="POST" style="display:inline;">
             @csrf
-            <button type="submit" class="exportar-btn">📄 Exportar como TXT</button>
+            <button type="submit" class="exportar-btn">📊 Exportar como CSV</button>
         </form>
     </div>
 </body>

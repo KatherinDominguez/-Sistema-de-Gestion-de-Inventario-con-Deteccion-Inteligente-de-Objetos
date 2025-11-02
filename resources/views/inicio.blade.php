@@ -8,9 +8,10 @@
         <li><a href="{{ route('objetos.index') }}">Gestión de Objetos</a></li>
         <li><a href="{{ route('inventario') }}">Inventario</a></li>
         <li><a href="{{ route('reportes.index') }}">Reportes</a></li>
+        <li><a href="{{ route('dashboard') }}">📊 Dashboard</a></li>
         <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-        @csrf
-        <button type="submit" class="btn btn-danger">Cerrar Sesión</button>
+            @csrf
+            <button type="submit" class="btn btn-danger">Cerrar Sesión</button>
         </form>
     </ul>
 @endsection
@@ -121,14 +122,32 @@
         @endif
     @endif
 
-    @if(session('resultado'))
-        <form method="POST" action="{{ route('guardar.inventario') }}">
-            @csrf
-            <input type="hidden" name="objeto_id" value="{{ session('ultimo_objeto_id') }}">
-            <input type="hidden" name="cantidad" value="{{ \Illuminate\Support\Str::of(session('resultado'))->match('/(\d+)/') }}">
-            <input type="hidden" name="resultado" value="{{ session('resultado') }}">
-            <button type="submit">Guardar en inventario</button>
-        </form>
+    {{-- Resultados de identificación múltiple --}}
+    @if(session('resultados_multiples'))
+        <div style="margin-top: 20px; padding: 15px; background-color: #e9f7ef; border: 1px solid #28a745; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #155724;">🔍 Resultados de la identificación:</h3>
+            <ul style="list-style-type: none; padding-left: 0;">
+                @foreach(session('resultados_multiples') as $res)
+                    <li style="margin-bottom: 8px; padding: 5px; background-color: #f8f9fa; border-radius: 4px;">
+                        <strong>{{ $res['nombre'] }} ({{ $res['color'] }}):</strong> 
+                        @if($res['cantidad'] > 0)
+                            <span style="color: #28a745;">{{ $res['cantidad'] }} detectado(s)</span>
+                        @else
+                            <span style="color: #dc3545;">0 detectados</span>
+                        @endif
+                        @if(str_starts_with($res['resultado'], 'Error'))
+                            <br><small style="color: #dc3545;">⚠️ {{ $res['resultado'] }}</small>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+            <form method="POST" action="{{ route('guardar.inventario') }}" style="margin-top: 10px;">
+                @csrf
+                <button type="submit" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    ✅ Guardar todos los resultados en inventario
+                </button>
+            </form>
+        </div>
     @endif
 
     @if ($errors->any())
