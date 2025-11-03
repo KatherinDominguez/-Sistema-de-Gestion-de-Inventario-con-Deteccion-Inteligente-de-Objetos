@@ -567,10 +567,6 @@ chown -R www-data:www-data storage bootstrap/cache
 - [ ] Soporte multiidioma
 - [ ] Machine Learning para mejorar precisión
 
-## 👥 Autores
-
-- **Tu Nombre** - *Desarrollo Full Stack* - [GitHub](https://github.com/tu-usuario)
-
 ## 📄 Licencia
 
 Este proyecto es parte de un trabajo académico para la materia de Métodos y Técnicas de Programación.
