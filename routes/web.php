@@ -9,6 +9,7 @@ use App\Http\Controllers\VozController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\DashboardController;
+use Illuminate\Support\Facades\Session;
 
 // Rutas de autenticación
 Route::get('/', [AuthController::class, 'mostrarLogin'])->name('login');
@@ -21,7 +22,7 @@ Route::post('/logout', function () {
 Route::get('/registro', [AuthController::class, 'mostrarRegistro'])->name('registro');
 Route::post('/registro', [AuthController::class, 'guardarUsuario'])->name('registro.guardar');
 
-// Rutas de usuarios (CORREGIDAS - eliminé duplicados)
+// Rutas de usuarios
 Route::get('/user', [AuthController::class, 'mostrarUsuarios'])->name('user');
 Route::get('/user/nuevo', function(){
     return view('nuevoUsuario');
