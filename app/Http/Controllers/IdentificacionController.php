@@ -8,79 +8,110 @@ use App\Models\Objeto;
 use App\Models\Deteccion;
 
 class IdentificacionController extends Controller
-{
+{   
+    
     public function identificar(Request $request)
-{
-    try {
-        $objeto = null;
-
-        if ($request->filled('objeto_id')) {
-            $objeto = Objeto::findOrFail($request->input('objeto_id'));
-        } elseif ($request->filled('voz_nombre') && $request->filled('voz_color')) {
-            $objeto = Objeto::where('nombre', $request->input('voz_nombre'))
-                            ->where('color', $request->input('voz_color'))
-                            ->first();
-            if (!$objeto) {
-                return back()->withErrors("No se encontró un objeto con nombre '" . $request->input('voz_nombre') . "' y color '" . $request->input('voz_color') . "'");
+    {
+        try {
+            // Verificar que haya un archivo subido
+            $archivo = session('archivo_subido');
+            if (!$archivo) {
+                $this->agregarAlHistorialTopbar("Error: No se encontró archivo para procesar.");
+                return back()->withErrors('No se encontró ningún archivo cargado.');
             }
-        } else {
-            return back()->withErrors('No se proporcionó información suficiente para identificar el objeto.');
+
+            $ruta_absoluta = storage_path('app/public/' . $archivo);
+            if (!file_exists($ruta_absoluta)) {
+                return back()->withErrors('El archivo subido no existe en el servidor.');
+            }
+
+            // Obtener TODOS los objetos registrados
+            $objetos = Objeto::all();
+            if ($objetos->isEmpty()) {
+                return back()->withErrors('No hay objetos registrados para identificar.');
+            }
+
+            $resultados = [];
+            $this->agregarAlHistorialTopbar("Analizando imagen '$archivo' para " . $objetos->count() . " tipos de objetos...");
+
+            foreach ($objetos as $objeto) {
+                $tipo = $objeto->forma;
+                $color = $objeto->color;
+                $nombre = $objeto->nombre;
+
+                $script = base_path('app/Python/detectar_objetos.py');
+                $comando = "python " . escapeshellcmd($script) . " " .
+                        escapeshellarg($ruta_absoluta) . " " .
+                        escapeshellarg($tipo) . " " .
+                        escapeshellarg($color);
+
+                $salida = shell_exec($comando . " 2>&1");
+
+                if (!$salida || str_starts_with(trim($salida), 'ERROR:')) {
+                    $mensajeError = "Error al procesar '$nombre': " . trim($salida);
+                    $this->agregarAlHistorialTopbar($mensajeError);
+                    $resultados[] = [
+                        'objeto_id' => $objeto->id,
+                        'nombre' => $nombre,
+                        'color' => $color,
+                        'resultado' => 'Error: ' . trim($salida),
+                        'cantidad' => 0
+                    ];
+                } else {
+                    // Extraer la cantidad del mensaje (ej: "Detectado 3 objetos...")
+                    preg_match('/Detectado (\d+) objetos/', $salida, $matches);
+                    $cantidad = isset($matches[1]) ? (int)$matches[1] : 0;
+
+                    $this->agregarAlHistorialTopbar("✓ $nombre ($color): $cantidad detectados");
+                    $resultados[] = [
+                        'objeto_id' => $objeto->id,
+                        'nombre' => $nombre,
+                        'color' => $color,
+                        'resultado' => trim($salida),
+                        'cantidad' => $cantidad
+                    ];
+                }
+            }
+
+            // CAMBIO AQUÍ: Solo guardar en sesión permanente, NO usar with()
+            session(['resultados_multiples' => $resultados]);
+
+            // CAMBIO AQUÍ: Redirigir sin with() para mantener la sesión
+            return redirect()->route('inicio');
+
+        } catch (\Exception $e) {
+            $this->agregarAlHistorialTopbar("Excepción en la identificación múltiple: " . $e->getMessage());
+            return back()->withErrors('Error en la identificación: ' . $e->getMessage());
         }
-
-        $tipo = $objeto->forma;
-        $color = $objeto->color;
-        session(['ultimo_objeto_id' => $objeto->id]);
-
-        $archivo = session('archivo_subido');
-        if (!$archivo) {
-            $this->agregarAlHistorialTopbar("Error: No se encontró archivo para procesar.");
-            return back()->withErrors('No se encontró ningún archivo cargado.');
-        }
-
-        $this->agregarAlHistorialTopbar("Procesando archivo '$archivo'...");
-        $ruta_absoluta = storage_path('app/public/' . $archivo);
-        $extension = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
-        $script =base_path('app/Python/detectar_objetos.py');
-
-        $comando = "python " . escapeshellcmd($script) . " " .
-                   escapeshellarg($ruta_absoluta) . " " .
-                   escapeshellarg($tipo) . " " .
-                   escapeshellarg($color)." " .
-                   escapeshellarg($objeto->nombre);
-
-        $salida = shell_exec($comando . " 2>&1");
-
-        if (!$salida || str_starts_with(trim($salida), 'ERROR:')) {
-            $this->agregarAlHistorialTopbar("Error al procesar: " . trim($salida));
-            return back()->withErrors('Error en el procesamiento: ' . trim($salida));
-        }
-
-        $this->agregarAlHistorialTopbar($salida);
-        session()->forget(['resultado']);
-        return back()->with('resultado', trim($salida));
-
-    } catch (\Exception $e) {
-        $this->agregarAlHistorialTopbar("Excepción en la identificación: " . $e->getMessage());
-        return back()->withErrors('Error en la identificación: ' . $e->getMessage());
     }
-}
-
 
     public function guardarEnInventario(Request $request)
     {
-        try {
-            Deteccion::create([
-                'objeto_id' => $request->input('objeto_id') ?? session('ultimo_objeto_id'),
-                'archivo' => session('archivo_subido'),
-                'cantidad_detectada' => $request->input('cantidad'),
-                'resultado' => $request->input('resultado')
-            ]);
-            $this->agregarAlHistorialTopbar("Guardado en el inventario correctamente.");
-            return back()->with('success', 'Detección guardada en el inventario.');
+    try {
+        $resultados = session('resultados_multiples');
+        if (!$resultados) {
+            return back()->withErrors('No hay resultados para guardar.');
+        }
+
+        foreach ($resultados as $res) {
+            if ($res['cantidad'] > 0) {
+                Deteccion::create([
+                    'objeto_id' => $res['objeto_id'],
+                    'archivo' => session('archivo_subido'),
+                    'cantidad_detectada' => $res['cantidad'],
+                    'resultado' => $res['resultado']
+                ]);
+            }
+        }
+
+        $this->agregarAlHistorialTopbar("Guardados " . count($resultados) . " resultados en el inventario.");
+        session()->forget(['resultados_multiples']);
+        return back()->with('success', 'Resultados guardados en el inventario.');
         } catch (\Exception $e) {
             return back()->withErrors('Error al guardar en inventario: ' . $e->getMessage());
         }
     }
+    
 
     private function agregarAlHistorialTopbar($mensaje)
     {

@@ -10,11 +10,19 @@ class InventarioController extends Controller
 {
     public function index()
     {
+        // Obtener el archivo más reciente para cada objeto_id
+        $deteccionesRecientes = Deteccion::select('objeto_id', DB::raw('MAX(id) as ultima_deteccion_id'))
+            ->groupBy('objeto_id')
+            ->pluck('ultima_deteccion_id');
+
+        $deteccionesConArchivo = Deteccion::whereIn('id', $deteccionesRecientes)
+            ->pluck('archivo', 'objeto_id');
+
         $agrupado = Deteccion::select('objeto_id', DB::raw('SUM(cantidad_detectada) as total'))
             ->groupBy('objeto_id')
             ->with('objeto')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($deteccionesConArchivo) {
                 $estado = match (true) {
                     $item->total < 3 => 'Crítico',
                     $item->total < 7 => 'Bajo',
@@ -32,12 +40,14 @@ class InventarioController extends Controller
                     'color'      => $item->objeto->color,
                     'total'      => $item->total,
                     'estado'     => $estado,
-                    'prioridad'  => $prioridad
+                    'prioridad'  => $prioridad,
+                    'archivo'    => $deteccionesConArchivo[$item->objeto_id] ?? null
                 ];
             });
 
         return view('inventario.inventario', compact('agrupado'));
     }
+
     public function exportar()
     {
         $inventario = Deteccion::with('objeto')
@@ -45,35 +55,65 @@ class InventarioController extends Controller
             ->groupBy('objeto_id')
             ->get();
 
-        $contenido = "📦 INVENTARIO GENERAL - " . now()->format('d/m/Y H:i') . "\n\n";
+        // Crear el nombre del archivo
+        $nombreArchivo = 'inventario_' . now()->format('Ymd_His') . '.csv';
 
-        foreach ($inventario as $item) {
-            $objeto = $item->objeto;
-            $estado = match (true) {
-                $item->total < 10 => 'Crítico',
-                $item->total < 30 => 'Bajo',
-                default => 'Suficiente',
-            };
-            $prioridad = match ($estado) {
-                'Crítico' => 'Alta',
-                'Bajo' => 'Media',
-                default => 'Baja'
-            };
+        // Definir los encabezados para el CSV
+        $encabezados = [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
+        ];
 
-            $contenido .= "Objeto: {$objeto->nombre}\n";
-            $contenido .= "Color: {$objeto->color}\n";
-            $contenido .= "Cantidad Detectada: {$item->total}\n";
-            $contenido .= "Estado: {$estado}\n";
-            $contenido .= "Prioridad: {$prioridad}\n";
-            $contenido .= "----------------------------\n\n";
-        }
+        // Crear el callback para generar el CSV
+        $callback = function() use ($inventario) {
+            $archivo = fopen('php://output', 'w');
+            
+            // Agregar BOM para que Excel reconozca UTF-8
+            fprintf($archivo, chr(0xEF).chr(0xBB).chr(0xBF));
 
-        $contenido .= "(Total objetos: " . count($inventario) . ")\n";
+            // Escribir encabezados de las columnas
+            fputcsv($archivo, [
+                'Objeto',
+                'Forma',
+                'Color',
+                'Cantidad Total',
+                'Estado',
+                'Prioridad',
+                'Fecha de Exportación'
+            ]);
 
-        $nombreArchivo = 'inventario_' . now()->format('Ymd_His') . '.txt';
+            // Escribir cada fila de datos
+            foreach ($inventario as $item) {
+                $objeto = $item->objeto;
+                
+                // Calcular estado
+                $estado = match (true) {
+                    $item->total < 3 => 'Crítico',
+                    $item->total < 7 => 'Bajo',
+                    default => 'Suficiente',
+                };
+                
+                // Calcular prioridad
+                $prioridad = match ($estado) {
+                    'Crítico' => 'Alta',
+                    'Bajo' => 'Media',
+                    default => 'Baja'
+                };
 
-        return response($contenido)
-            ->header('Content-Type', 'text/plain')
-            ->header('Content-Disposition', 'attachment; filename="' . $nombreArchivo . '"');
+                fputcsv($archivo, [
+                    $objeto->nombre,
+                    $objeto->forma,
+                    $objeto->color,
+                    $item->total,
+                    $estado,
+                    $prioridad,
+                    now()->format('d/m/Y H:i:s')
+                ]);
+            }
+
+            fclose($archivo);
+        };
+
+        return response()->stream($callback, 200, $encabezados);
     }
 }
